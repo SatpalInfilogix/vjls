@@ -10,17 +10,16 @@ import AttendanceScreen from './screens/AttendanceScreen';
 import EarnedPayrollScreen from './screens/EarnedPayrollScreen';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import theme from './theme';
 import FAQScreen from './screens/FAQScreen';
 import ApplyLeaveScreen from './screens/ApplyLeaveScreen';
 import HelpAndComplaintsScreen from './screens/HelpAndComplaintsScreen';
 import EmergencyContactScreen from './screens/EmergencyContactScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActivityIndicator, SafeAreaView } from 'react-native';
+import { ActivityIndicator, Alert, PermissionsAndroid, SafeAreaView } from 'react-native';
 import { useNetwork } from './context/NetworkContext';
 import NoInternetScreen from './screens/NoInternetScreen';
+import messaging from '@react-native-firebase/messaging';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -108,18 +107,18 @@ const App: React.FC = () => {
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
   const { isConnected } = useNetwork();
 
-  useEffect(() => {
-    const checkUserSession = async () => {
-      try {
-        const userToken = await AsyncStorage.getItem('@userToken');
-        setIsUserLoggedIn(userToken !== null);
-      } catch (error) {
-        console.error("Failed to load user data", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const checkUserSession = async () => {
+    try {
+      const userToken = await AsyncStorage.getItem('@userToken');
+      setIsUserLoggedIn(userToken !== null);
+    } catch (error) {
+      console.error("Failed to load user data", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     checkUserSession();
   }, []);
 
@@ -147,7 +146,7 @@ const App: React.FC = () => {
             backgroundColor: theme.colors.secondary,
           },
           headerTintColor: theme.colors.white,
-        }}/>
+        }} />
         <Stack.Screen name="FAQ" component={FAQScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ApplyLeave" component={ApplyLeaveScreen} options={{
           title: 'Apply for Leave',

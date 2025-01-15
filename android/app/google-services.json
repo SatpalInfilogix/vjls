@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "736700662749",
+    "project_id": "vigilus-push-notifications",
+    "storage_bucket": "vigilus-push-notifications.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:736700662749:android:25207e2b406ab4202cec34",
+        "android_client_info": {
+          "package_name": "com.vjls"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDh_xi05YCx26XpkJG9tcRyTuLFii9B4Q8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

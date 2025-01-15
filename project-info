@@ -1,0 +1,5 @@
+keytool -genkeypair -v -keystore vigilus-release-key.keystore -keyalg RSA -keysize 2048 -validity 10000 -alias vigilus-key
+
+Password: Vigilus123#
+
+CN=Satpal Singh Sekhon, OU=Security, O=Vigilus, L="Mohali, Chandigarh", ST=Punjab, C=IN correct

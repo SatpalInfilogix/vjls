@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, Alert, PermissionsAndroid } from 'react-native';
 import { TextInput, Button, Text, Provider as PaperProvider } from 'react-native-paper';
 import { StackNavigationProp } from '@react-navigation/stack';
 import theme from '../theme';
@@ -9,12 +9,14 @@ import ErrorMessage from './components/ErrorMessage';
 import axios from 'axios';
 import config from '../config';
 import { Image } from 'react-native';
+import messaging from '@react-native-firebase/messaging';
 
 type Props = {
   navigation: StackNavigationProp<any>;
 };
 
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
+  const [deviceToken, setDeviceToken] = useState<string>('');
   const [phoneNumber, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -34,16 +36,31 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const getDeviceToken = async() => {
+    const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
+
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      const fcmToken = await messaging().getToken();
+      setDeviceToken(fcmToken);
+    }
+  }
+
+  useEffect(()=>{
+    getDeviceToken();
+  }, [])
+
   const handleLogin = async () => {
     if (validate()) {
       try {
         setErrorMessage('');
         setIsSubmitting(true);
+        
 
         const response = await axios.post(`${config.apiEndpoint}login`,
           new URLSearchParams({
             phone_number: phoneNumber,
             password: password,
+            device_token: deviceToken
           }).toString(), {
           headers: {
             'X-Requested-With': 'XMLHttpRequest',

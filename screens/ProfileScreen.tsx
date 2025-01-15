@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StackNavigationProp } from '@react-navigation/stack';
 import axios from 'axios';
 import config from '../config';
+import messaging from '@react-native-firebase/messaging';
 
 type Props = {
   navigation: StackNavigationProp<any>;
@@ -50,6 +51,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   }, []);
 
   const logOut = async () => {
+    await messaging().deleteToken();
     await AsyncStorage.removeItem('@userToken');
     setUserProfile(null);
     navigation.navigate('Login');
