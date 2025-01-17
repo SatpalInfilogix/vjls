@@ -1,36 +1,42 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Text, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, Text, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Appbar } from 'react-native-paper';
 import theme from '../theme';
-
-interface AttendanceItem {
-  id: string;
-  date: string;
-  hours: string;
-  status: string;
-}
-
-const attendanceData: AttendanceItem[] = [
-  { id: '1', date: '01 Dec 2024', hours: '1:30 hrs', status: 'Present' },
-  { id: '2', date: '02 Dec 2024', hours: '-', status: 'Absent' },
-  { id: '3', date: '03 Dec 2024', hours: '1:30 hrs', status: 'Present' },
-  { id: '4', date: '04 Dec 2024', hours: '1:30 hrs', status: 'Present' },
-  { id: '5', date: '05 Dec 2024', hours: '-', status: 'Absent' },
-];
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import config from '../config';
 
 const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'Present':
+  switch (status.toLowerCase()) {
+    case 'present':
       return 'green';
-    case 'Absent':
+    case 'absent':
       return 'red';
+    case 'pending':
+      return 'orange';
+    case 'duty-not-assigned':
+      return 'gray';
     default:
       return 'gray';
   }
 };
 
+const formatStatus = (status: string) => {
+  switch (status.toLowerCase()) {
+    case 'pending':
+      return 'Pending';
+    case 'present':
+      return 'Present';
+    case 'duty-not-assigned':
+      return 'N/A';
+    default:
+      return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+};
+
 const AttendanceScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'Previous' | 'Current' | 'Custom'>('Current');
+  const [attendance, setAttendance] = useState();
 
   const renderTableHeader = () => (
     <View style={styles.tableHeadRow}>
@@ -40,32 +46,32 @@ const AttendanceScreen: React.FC = () => {
     </View>
   );
 
-  const renderTableRows = (data: AttendanceItem[]) => {
-    return data.map((item, index) => (
-      <View key={item.id} style={[styles.tableRow,
-        index === data.length - 1 && styles.noBorderBottom,
+  const renderTableRows = (data: any) => {
+    return data.map((item: any, index: number) => (
+      <View key={`${item.id}-${index}`} style={[styles.tableRow,
+      index === data.length - 1 && styles.noBorderBottom,
       ]}>
         <Text style={[styles.tableCell]}>{item.date}</Text>
-        <Text style={[styles.tableCell]}>{item.hours}</Text>
-        <Text style={[styles.tableCell, { color: getStatusColor(item.status) }]}>{item.status}</Text>
+        <Text style={[styles.tableCell]}>{item.LoggedHours}</Text>
+        <Text style={[styles.tableCell, { color: getStatusColor(item.status) }]}>{formatStatus(item.status)}</Text>
       </View>
     ));
   };
 
-  const renderTabContent = () => {
+  const renderTabContent = (attendance: any) => {
     switch (activeTab) {
       case 'Previous':
         return (
           <ScrollView style={styles.tableContainer}>
             {renderTableHeader()}
-            {renderTableRows(attendanceData)}
+            {renderTableRows(attendance.previousFortnight)}
           </ScrollView>
         );
       case 'Custom':
         return (
           <ScrollView style={styles.tableContainer}>
             {renderTableHeader()}
-            {renderTableRows(attendanceData)}
+            {renderTableRows(attendance.currentFortnight)}
           </ScrollView>
         );
       case 'Current':
@@ -73,34 +79,68 @@ const AttendanceScreen: React.FC = () => {
         return (
           <ScrollView style={styles.tableContainer}>
             {renderTableHeader()}
-            {renderTableRows(attendanceData)}
+            {renderTableRows(attendance.currentFortnight)}
           </ScrollView>
         );
     }
   };
 
+  const fetchAttendance = async () => {
+    try {
+      const userToken = await AsyncStorage.getItem('@userToken');
+
+      const response = await axios.post(`${config.apiEndpoint}get-attendance`,
+        new URLSearchParams({
+          start_date: '',
+          end_date: '',
+        }).toString(), {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Bearer ${userToken}`,
+        }
+      });
+
+      const { status } = response.data;
+
+      if (status) {
+        setAttendance(response.data)
+      }
+    } catch (error: any) {
+      // Handle errors that might occur during the request
+      console.error('Error fetching attendance:', error.message);
+    }
+  }
+
+  useEffect(() => {
+    fetchAttendance();
+  }, []);
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Appbar.Header style={{ backgroundColor: theme.colors.primary }}>
-        <Appbar.Content title="My Attendance" titleStyle={{ color: theme.colors.white }} />
-      </Appbar.Header>
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <Appbar.Header style={{ backgroundColor: theme.colors.primary }}>
+          <Appbar.Content title="My Attendance" titleStyle={{ color: theme.colors.white }} />
+        </Appbar.Header>
 
-      <View style={styles.content}>
-        <View style={styles.tabRow}>
-          {['Previous', 'Current', 'Custom'].map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              onPress={() => setActiveTab(tab as 'Previous' | 'Current' | 'Custom')}
-              style={[styles.tabButton, activeTab === tab && styles.activeTab]}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
+        <View style={styles.content}>
+          <View style={styles.tabRow}>
+            {['Previous', 'Current', 'Custom'].map((tab) => (
+              <TouchableOpacity
+                key={tab}
+                onPress={() => setActiveTab(tab as 'Previous' | 'Current' | 'Custom')}
+                style={[styles.tabButton, activeTab === tab && styles.activeTab]}
+              >
+                <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* The ScrollView will adjust based on the content */}
+          {attendance ? renderTabContent(attendance) : <></>}
         </View>
-
-        {renderTabContent()}
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -109,10 +149,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    flex: 1,
     padding: 16,
+    marginBottom: 0,
   },
   tableContainer: {
-    marginBottom: 16,
     backgroundColor: theme.colors.white,
     borderRadius: 10,
     elevation: 4,  // For shadow on Android
@@ -124,7 +165,7 @@ const styles = StyleSheet.create({
   tableRow: {
     flexDirection: 'row',
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderColor: theme.colors.gray,
   },

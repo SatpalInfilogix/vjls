@@ -20,6 +20,7 @@ import { ActivityIndicator, Alert, PermissionsAndroid, SafeAreaView } from 'reac
 import { useNetwork } from './context/NetworkContext';
 import NoInternetScreen from './screens/NoInternetScreen';
 import messaging from '@react-native-firebase/messaging';
+import MyLeavesScreen from './screens/MyLeavesScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -150,6 +151,13 @@ const App: React.FC = () => {
         <Stack.Screen name="FAQ" component={FAQScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ApplyLeave" component={ApplyLeaveScreen} options={{
           title: 'Apply for Leave',
+          headerStyle: {
+            backgroundColor: theme.colors.secondary,
+          },
+          headerTintColor: theme.colors.white,
+        }} />
+        <Stack.Screen name="AppliedLeaves" component={MyLeavesScreen} options={{
+          title: 'My Leaves',
           headerStyle: {
             backgroundColor: theme.colors.secondary,
           },

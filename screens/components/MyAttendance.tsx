@@ -1,36 +1,36 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Provider as PaperProvider, Card, Button } from 'react-native-paper';
 import theme from '../../theme';
 
 // Type for the TabButtons props
 interface TabButtonsProps {
-    selectedTab: 'last7days' | 'thisMonth';
-    setSelectedTab: (tab: 'last7days' | 'thisMonth') => void;
+    selectedTab: 'prevFornight' | 'thisFornight';
+    setSelectedTab: (tab: 'prevFornight' | 'thisFornight') => void;
 }
 
 // TabButtons Component
 const TabButtons: React.FC<TabButtonsProps> = ({ selectedTab, setSelectedTab }) => (
     <View style={styles.tabContainer}>
         <TouchableOpacity
-            onPress={() => setSelectedTab('last7days')}
-            style={[styles.tabButton, { 
-                backgroundColor: selectedTab === 'last7days' ? theme.colors.primary : theme.colors.background,
+            onPress={() => setSelectedTab('prevFornight')}
+            style={[styles.tabButton, {
+                backgroundColor: selectedTab === 'prevFornight' ? theme.colors.primary : theme.colors.background,
             }]}
         >
-            <Text style={{ 
-                color: selectedTab === 'last7days' ? theme.colors.white : theme.colors.secondary,
-            }}>Last 7 Days</Text>
+            <Text style={{
+                color: selectedTab === 'prevFornight' ? theme.colors.white : theme.colors.secondary,
+            }}>Last Fornight</Text>
         </TouchableOpacity>
         <TouchableOpacity
-            onPress={() => setSelectedTab('thisMonth')}
-            style={[styles.tabButton, { 
-                backgroundColor: selectedTab === 'thisMonth' ? theme.colors.secondary : theme.colors.background 
+            onPress={() => setSelectedTab('thisFornight')}
+            style={[styles.tabButton, {
+                backgroundColor: selectedTab === 'thisFornight' ? theme.colors.secondary : theme.colors.background
             }]}
         >
-            <Text style={{ 
-                color: selectedTab === 'thisMonth' ? theme.colors.white : theme.colors.secondary,
-            }}>This Month</Text>
+            <Text style={{
+                color: selectedTab === 'thisFornight' ? theme.colors.white : theme.colors.secondary,
+            }}>This Fornight</Text>
         </TouchableOpacity>
     </View>
 );
@@ -66,17 +66,21 @@ const AttendanceStats: React.FC<AttendanceStatsProps> = ({ absent, halfDays, pre
     </Card>
 );
 
+interface AttendanceProps {
+    attendances: any;
+}
+
 // MyAttendance Component
-const MyAttendance: React.FC = () => {
-    const [selectedTab, setSelectedTab] = useState<'last7days' | 'thisMonth'>('last7days');
+const MyAttendance: React.FC<AttendanceProps> = ({ attendances }) => {
+    const [selectedTab, setSelectedTab] = useState<'prevFornight' | 'thisFornight'>('prevFornight');
 
     const renderTabContent = useMemo(() => {
         switch (selectedTab) {
-            case 'last7days':
-                return <AttendanceStats absent={0} halfDays={4} present={4} />;
-            case 'thisMonth':
+            case 'prevFornight':
+                return <AttendanceStats absent={attendances?.absentDays || 0} halfDays={attendances?.halfDays || 0} present={attendances?.presentDays || 0} />;
+            case 'thisFornight':
             default:
-                return <AttendanceStats absent={5} halfDays={4} present={4} />;
+                return <AttendanceStats absent={attendances?.absentDays || 0} halfDays={attendances?.halfDays || 0} present={attendances?.presentDays || 0} />;
         }
     }, [selectedTab]);
 
@@ -84,7 +88,7 @@ const MyAttendance: React.FC = () => {
         <PaperProvider>
             <Text style={styles.sectionHeading}>My Attendance</Text>
             <View style={styles.container}>
-                <Card style={[styles.card, {backgroundColor: theme.colors.white}]}>
+                <Card style={[styles.card, { backgroundColor: theme.colors.white }]}>
                     <Card.Content>
                         <TabButtons selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
                         {renderTabContent}
@@ -116,7 +120,7 @@ const styles = StyleSheet.create({
     },
     tabButton: {
         marginHorizontal: 8,
-        flex:1,
+        flex: 1,
         padding: 8,
         alignItems: 'center',
         justifyContent: 'center',

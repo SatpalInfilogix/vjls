@@ -53,7 +53,6 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const logOut = async () => {
     await messaging().deleteToken();
     await AsyncStorage.removeItem('@userToken');
-    setUserProfile(null);
     navigation.navigate('Login');
   };
 

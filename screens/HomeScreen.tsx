@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
-import { Card, Title, Paragraph, Text, ActivityIndicator, Button } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { Title, Button } from 'react-native-paper';
 import theme from '../theme';
 import PunchSection from './components/PunchSection';
 import FeatherIcon from 'react-native-vector-icons/Feather';
@@ -10,6 +10,7 @@ import MyAttendance from './components/MyAttendance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import config from '../config';
+import messaging from '@react-native-firebase/messaging';
 
 const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [user, setUser] = useState() as any;
@@ -18,6 +19,7 @@ const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   const fetchUserInfo = async () => {
     const userInfo = await AsyncStorage.getItem('@userInfo');
+
     if (userInfo) {
       setUser(JSON.parse(userInfo));
     }
@@ -45,6 +47,11 @@ const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     setIsRefreshing(false);
   }, []);
 
+  const handleLogout = async () => {
+    await messaging().deleteToken();
+    await AsyncStorage.removeItem('@userToken');
+    navigation.navigate('Login');
+  }
 
   useEffect(() => {
     fetchUserInfo();
@@ -53,15 +60,28 @@ const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   return (
     <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}>
-      {!user && <Title style={{ marginBottom: 6 }}>Welcome {user?.first_name}!</Title>}
+      {user && (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <Title>Welcome {user?.first_name}!</Title>
+
+          <Button
+            mode="contained"
+            icon={() => <FeatherIcon name="log-out" size={20} color={theme.colors.white} />}
+            style={[{ backgroundColor: theme.colors.primary }]}
+            onPress={handleLogout}>
+            Logout
+          </Button>
+        </View>
+      )}
 
       <PunchSection duty={stats.today_duty} />
 
-      <UpcomingHolidays />
+      {(stats?.upcoming_holidays || []).length > 0 &&
+      <UpcomingHolidays upcomingHolidays={stats?.upcoming_holidays || []} /> }
 
       <LeaveStatus />
 
-      <MyAttendance />
+      <MyAttendance attendances={stats.attendances} />
 
       <Button
         mode="outlined"
