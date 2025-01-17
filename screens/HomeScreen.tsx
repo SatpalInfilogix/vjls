@@ -87,7 +87,7 @@ const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         mode="outlined"
         icon='calendar-edit'
         onPress={() => navigation.navigate('ApplyLeave')}
-        style={[styles.linkButton, { marginBottom: 25 }]}
+        style={[styles.linkButton, { marginTop: 24, marginBottom: 28 }]}
         labelStyle={{ color: theme.colors.primary }}
       >
         Apply Leave

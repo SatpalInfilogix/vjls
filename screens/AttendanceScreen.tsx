@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Text, TouchableOpacity, SafeAreaView } from 'react-native';
-import { Appbar } from 'react-native-paper';
+import { Appbar, Button } from 'react-native-paper';
 import theme from '../theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import config from '../config';
+import DatePicker from 'react-native-date-picker'; // Import the date picker
 
 const getStatusColor = (status: string) => {
   switch (status.toLowerCase()) {
@@ -36,7 +37,11 @@ const formatStatus = (status: string) => {
 
 const AttendanceScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'Previous' | 'Current' | 'Custom'>('Current');
-  const [attendance, setAttendance] = useState();
+  const [attendance, setAttendance] = useState<any>(null);
+  const [openStartDatePicker, setOpenStartDatePicker] = useState(false);
+  const [openEndDatePicker, setOpenEndDatePicker] = useState(false);
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
 
   const renderTableHeader = () => (
     <View style={styles.tableHeadRow}>
@@ -58,6 +63,10 @@ const AttendanceScreen: React.FC = () => {
     ));
   };
 
+  const filterAttendance = async () => {
+    fetchAttendance(startDate.toISOString(), endDate.toISOString());
+  }
+
   const renderTabContent = (attendance: any) => {
     switch (activeTab) {
       case 'Previous':
@@ -69,10 +78,59 @@ const AttendanceScreen: React.FC = () => {
         );
       case 'Custom':
         return (
-          <ScrollView style={styles.tableContainer}>
-            {renderTableHeader()}
-            {renderTableRows(attendance.currentFortnight)}
-          </ScrollView>
+          <View>
+            <View style={[styles.tableContainer, styles.customTabContainer]}>
+              <Text style={styles.customTabText}>Select Date Range</Text>
+              <View style={styles.datePickersContainer}>
+                {/* Start Date Picker */}
+                <TouchableOpacity onPress={() => setOpenStartDatePicker(true)} style={styles.datePickerButton}>
+                  <Text style={[styles.datePickerButtonLeft]}>Start Date: </Text>
+                  <Text style={[styles.datePickerText, styles.datePickerButtonLeft]}>{startDate.toLocaleDateString()}</Text>
+                </TouchableOpacity>
+
+                {/* End Date Picker */}
+                <TouchableOpacity onPress={() => setOpenEndDatePicker(true)} style={styles.datePickerButton}>
+                  <Text style={[styles.datePickerButtonRight]}>End Date:</Text>
+                  <Text style={[styles.datePickerText, styles.datePickerButtonRight]}>{endDate.toLocaleDateString()}</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Start Date Picker modal */}
+              <DatePicker
+                modal
+                open={openStartDatePicker}
+                date={startDate}
+                maximumDate={new Date()}
+                onConfirm={(date) => {
+                  setStartDate(date);
+                  setOpenStartDatePicker(false);
+                }}
+                onCancel={() => setOpenStartDatePicker(false)}
+                mode="date"
+              />
+
+              {/* End Date Picker modal */}
+              <DatePicker
+                modal
+                open={openEndDatePicker}
+                date={endDate}
+                maximumDate={new Date()}
+                onConfirm={(date) => {
+                  setEndDate(date);
+                  setOpenEndDatePicker(false);
+                }}
+                onCancel={() => setOpenEndDatePicker(false)}
+                mode="date"
+              />
+        
+              <Button mode='contained' style={[{ backgroundColor: theme.colors.primary }]} onPress={filterAttendance} disabled={startDate.toDateString() === endDate.toDateString()}>Filter Attendance</Button>
+            </View>
+
+            <ScrollView style={styles.tableContainer}>
+              {renderTableHeader()}
+              {renderTableRows(attendance.customData)}
+            </ScrollView>
+          </View>
         );
       case 'Current':
       default:
@@ -85,14 +143,14 @@ const AttendanceScreen: React.FC = () => {
     }
   };
 
-  const fetchAttendance = async () => {
+  const fetchAttendance = async (start_date = '', end_date = '') => {
     try {
       const userToken = await AsyncStorage.getItem('@userToken');
 
       const response = await axios.post(`${config.apiEndpoint}get-attendance`,
         new URLSearchParams({
-          start_date: '',
-          end_date: '',
+          start_date,
+          end_date,
         }).toString(), {
         headers: {
           'X-Requested-With': 'XMLHttpRequest',
@@ -107,13 +165,16 @@ const AttendanceScreen: React.FC = () => {
         setAttendance(response.data)
       }
     } catch (error: any) {
-      // Handle errors that might occur during the request
       console.error('Error fetching attendance:', error.message);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchAttendance();
+    if (activeTab === 'Custom') {
+      fetchAttendance(startDate.toISOString(), endDate.toISOString());
+    } else {
+      fetchAttendance();
+    }
   }, []);
 
   return (
@@ -136,8 +197,7 @@ const AttendanceScreen: React.FC = () => {
             ))}
           </View>
 
-          {/* The ScrollView will adjust based on the content */}
-          {attendance ? renderTabContent(attendance) : <></>}
+          {attendance ? renderTabContent(attendance) : <Text>Loading...</Text>}
         </View>
       </View>
     </SafeAreaView>
@@ -156,11 +216,12 @@ const styles = StyleSheet.create({
   tableContainer: {
     backgroundColor: theme.colors.white,
     borderRadius: 10,
-    elevation: 4,  // For shadow on Android
-    shadowColor: '#000',  // For shadow on iOS
+    elevation: 4,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
+    marginBottom: 16,
   },
   tableRow: {
     flexDirection: 'row',
@@ -177,7 +238,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 10,
   },
   noBorderBottom: {
-    borderBottomWidth: 0
+    borderBottomWidth: 0,
   },
   tableHeader: {
     flex: 1,
@@ -215,6 +276,41 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: theme.colors.white,
+  },
+  customTabText: {
+    fontSize: 16,
+    marginBottom: 8,
+    fontWeight: 'bold',
+  },
+  customTabContainer: {
+    padding: 16,
+    marginBottom: 12
+  },
+  datePickersContainer: {
+    flexDirection: 'row',
+    marginBottom: 6,
+  },
+  datePickerButtonLeft: {
+    marginRight: 8,  // Space between the buttons
+  },
+  datePickerButtonRight: {
+    marginLeft: 8,  // Space between the buttons
+  },
+  datePickerButton: {
+    borderRadius: 8,
+    backgroundColor: theme.colors.white,
+    marginBottom: 8,
+    width: '48%'
+  },
+  datePickerText: {
+    color: theme.colors.primary,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#444',
+    paddingVertical: 8,
+    borderRadius: 8,
+    width: '100%',
+    textAlign: 'center',
   },
 });
 
