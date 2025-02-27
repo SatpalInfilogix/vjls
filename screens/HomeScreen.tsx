@@ -79,7 +79,7 @@ const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       {(stats?.upcoming_holidays || []).length > 0 &&
       <UpcomingHolidays upcomingHolidays={stats?.upcoming_holidays || []} /> }
 
-      <LeaveStatus />
+      <LeaveStatus leaves={stats.leaves} />
 
       <MyAttendance attendances={stats.attendances} />
 

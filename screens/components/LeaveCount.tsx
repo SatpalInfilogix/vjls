@@ -5,7 +5,11 @@ import { StackNavigationProp } from '@react-navigation/stack'; // Import the nav
 import { useNavigation } from '@react-navigation/native';
 import theme from '../../theme';
 
-const LeaveStatus: React.FC = () => {
+interface LeaveProps {
+    leaves: any;
+}
+
+const LeaveStatus: React.FC<LeaveProps> = ({ leaves }) => {
     const navigation = useNavigation<StackNavigationProp<any>>();
 
     const handleViewAll = () => {
@@ -27,17 +31,17 @@ const LeaveStatus: React.FC = () => {
                 <Card.Content style={styles.card}>
                     <View style={styles.row}>
                         <View style={[styles.section]}>
-                            <Text style={[styles.heading, { color: theme.colors.warning }]}>0</Text>
+                            <Text style={[styles.heading, { color: theme.colors.warning }]}>{leaves.pendingLeaves}</Text>
                             <Text style={[styles.label, { color: theme.colors.warning }]}>Pending</Text>
                         </View>
 
                         <View style={styles.section}>
-                            <Text style={[styles.heading, { color: theme.colors.success }]}>4</Text>
+                            <Text style={[styles.heading, { color: theme.colors.success }]}>{leaves.approvedLeaves}</Text>
                             <Text style={[styles.label, { color: theme.colors.success }]}>Approved</Text>
                         </View>
 
                         <View style={styles.section}>
-                            <Text style={[styles.heading, { color: theme.colors.error }]}>4</Text>
+                            <Text style={[styles.heading, { color: theme.colors.error }]}>{leaves.rejectedLeaves}</Text>
                             <Text style={[styles.label, { color: theme.colors.error }]}>Rejected</Text>
                         </View>
                     </View>
