@@ -31,17 +31,17 @@ const LeaveStatus: React.FC<LeaveProps> = ({ leaves }) => {
                 <Card.Content style={styles.card}>
                     <View style={styles.row}>
                         <View style={[styles.section]}>
-                            <Text style={[styles.heading, { color: theme.colors.warning }]}>{leaves.pendingLeaves}</Text>
+                            <Text style={[styles.heading, { color: theme.colors.warning }]}>{leaves?.pendingLeaves || 0}</Text>
                             <Text style={[styles.label, { color: theme.colors.warning }]}>Pending</Text>
                         </View>
 
                         <View style={styles.section}>
-                            <Text style={[styles.heading, { color: theme.colors.success }]}>{leaves.approvedLeaves}</Text>
+                            <Text style={[styles.heading, { color: theme.colors.success }]}>{leaves?.approvedLeaves || 0}</Text>
                             <Text style={[styles.label, { color: theme.colors.success }]}>Approved</Text>
                         </View>
 
                         <View style={styles.section}>
-                            <Text style={[styles.heading, { color: theme.colors.error }]}>{leaves.rejectedLeaves}</Text>
+                            <Text style={[styles.heading, { color: theme.colors.error }]}>{leaves?.rejectedLeaves || 0}</Text>
                             <Text style={[styles.label, { color: theme.colors.error }]}>Rejected</Text>
                         </View>
                     </View>

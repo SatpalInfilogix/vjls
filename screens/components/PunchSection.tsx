@@ -32,6 +32,7 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
                     buttonPositive: "OK",
                 }
             );
+
             return granted === PermissionsAndroid.RESULTS.GRANTED;
         } else {
             return true; // Assume permission is granted for simplicity
@@ -199,7 +200,7 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                         <View style={{ flex: 1, margin: 5 }}>
                             <Title style={{ color: theme.colors.white, fontSize: 14 }}>Punch In</Title>
-                            <Title style={{ color: theme.colors.white, fontSize: 14 }}>{punchInfo.in_time ? getTimeFromDate(punchInfo.in_time) : `--:--`}</Title>
+                            <Title style={{ color: theme.colors.white, fontSize: 14 }}>{punchInfo && punchInfo.in_time ? getTimeFromDate(punchInfo.in_time) : `--:--`}</Title>
                         </View>
                         <View style={{ flex: 1, margin: 5 }}>
                             <Title style={{ color: theme.colors.white, fontSize: 14 }}>Punch Out</Title>
