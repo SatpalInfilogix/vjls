@@ -145,12 +145,12 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
 
                     setIsPunchedIn((prevState) => !prevState);
                     setIsPunching(false);
-                } catch (error) {
+                } catch (error: any) {
                     setIsPunching(false);
                     if (axios.isAxiosError(error) && error.response?.status) {
                         Alert.alert(error.response.data.message || 'Something went wrong!');
                     } else {
-                        Alert.alert("Error", `Failed to punch ${prefix}.`);
+                        Alert.alert(error.message || `Failed to punch ${prefix}.`);
                     }
                 }
             }
@@ -167,7 +167,6 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
                 setIsPunchedIn(false);
             }
         } catch (error) {
-            console.error('Error retrieving punch status:', error);
             Alert.alert('Error', 'Failed to retrieve punch status.');
         }
     };
