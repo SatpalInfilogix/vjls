@@ -14,18 +14,16 @@ const UpcomingHolidays: React.FC<UpcomingHolidaysProps> = ({upcomingHolidays}) =
 
             <View style={styles.cardsContainer}>
             {upcomingHolidays.map((holiday: any) => {
-                const holidayDate = new Date(holiday.date);
-                const formattedDate = holidayDate.toLocaleDateString('en-US', {
+                const [year, month, day] = holiday.date.split('-');
+                const formattedDate = `${new Date(Number(year), Number(month) - 1, Number(day)).toLocaleString('en-US', {
                     month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                });
+                })} ${Number(day)}, ${year}`;
 
                 return (
                 <Card key={holiday.id} style={styles.card}>
                     <Card.Content>
-                    <Title>{holiday.holiday_name}</Title>
-                    <Paragraph>{formattedDate}</Paragraph>
+                    <Title style={{ color: 'white' }}>{holiday.holiday_name}</Title>
+                    <Paragraph style={{ color: 'white' }}>{formattedDate}</Paragraph>
                     </Card.Content>
                 </Card>
                 );
@@ -54,7 +52,7 @@ const styles = StyleSheet.create({
     card: {
         width: '48%',
         marginBottom: 16,
-        backgroundColor: theme.colors.white
+        backgroundColor: theme.colors.activeTabColor
     },
 });
 

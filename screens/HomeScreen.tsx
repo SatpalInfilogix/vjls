@@ -11,6 +11,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import config from '../config';
 import messaging from '@react-native-firebase/messaging';
+import { CommonActions } from '@react-navigation/native';
+import UpcomingDuties from './components/UpcomingDuties';
 
 const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [user, setUser] = useState() as any;
@@ -50,7 +52,12 @@ const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const handleLogout = async () => {
     await messaging().deleteToken();
     await AsyncStorage.removeItem('@userToken');
-    navigation.navigate('Login');
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      })
+    );
   }
 
   useEffect(() => {
@@ -75,6 +82,8 @@ const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       )}
 
       <PunchSection duty={stats.today_duty} />
+
+      <UpcomingDuties duty={stats.upcoming_duties} />
 
       {(stats?.upcoming_holidays || []).length > 0 &&
       <UpcomingHolidays upcomingHolidays={stats?.upcoming_holidays || []} /> }

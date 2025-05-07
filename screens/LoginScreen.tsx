@@ -56,11 +56,14 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         setIsSubmitting(true);
         
 
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        console.log(timezone)
         const response = await axios.post(`${config.apiEndpoint}login`,
           new URLSearchParams({
             phone_number: phoneNumber,
             password: password,
-            device_token: deviceToken
+            device_token: deviceToken,
+            timezone: timezone,
           }).toString(), {
           headers: {
             'X-Requested-With': 'XMLHttpRequest',

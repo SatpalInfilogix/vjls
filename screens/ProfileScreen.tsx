@@ -8,6 +8,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import axios from 'axios';
 import config from '../config';
 import messaging from '@react-native-firebase/messaging';
+import { CommonActions } from '@react-navigation/native';
 
 type Props = {
   navigation: StackNavigationProp<any>;
@@ -43,7 +44,12 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       } catch (error) {
         await AsyncStorage.removeItem('@userToken');
         setUserProfile(null);
-        navigation.navigate('Login');
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          })
+        );
       }
     };
 
@@ -53,7 +59,12 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const logOut = async () => {
     await messaging().deleteToken();
     await AsyncStorage.removeItem('@userToken');
-    navigation.navigate('Login');
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      })
+    );
   };
 
   if (isLoading) {
@@ -61,7 +72,12 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   }
 
   if(!userProfile){
-    navigation.navigate('Login');
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      })
+    );
   }
 
   return (
