@@ -18,6 +18,7 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
     const [isPunchedIn, setIsPunchedIn] = useState(false);
     const [isPunching, setIsPunching] = useState(false);
     const [errMessage, setErrMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [punchInfo, setPunchInfo] = useState(null) as any;
 
     const requestLocationPermission = async () => {
@@ -112,10 +113,10 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
                         uri: Platform.OS === 'android' ? image.uri : image.uri.replace('file://', ''),
                     });
                     
-                    formData.append(`${prefix}_lat`, location.coords.latitude.toString());
-                    formData.append(`${prefix}_long`, location.coords.longitude.toString());
-                    // formData.append(`${prefix}_lat`, '18.015961573348346');
-                    // formData.append(`${prefix}_long`, '-76.7997497960639');
+                    // formData.append(`${prefix}_lat`, location.coords.latitude.toString());
+                    // formData.append(`${prefix}_long`, location.coords.longitude.toString());
+                    formData.append(`${prefix}_lat`, '18.109581');
+                    formData.append(`${prefix}_long`, '-77.297508');
                     formData.append(`time`, getCurrentDateTime());
                     formData.append(`${prefix}_location`, JSON.stringify(location));
 
@@ -144,10 +145,16 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
                         let { data } = apiResponse;
                         await AsyncStorage.setItem('@punchInfo', JSON.stringify(data));
                         setPunchInfo(data);
+                        setSuccessMessage('Successfully punched in!');
                     } else {
                         await AsyncStorage.removeItem('@punchInfo');
                         setPunchInfo(null);
+                        setSuccessMessage('Successfully punched out!');
                     }
+
+                    setTimeout(() => {
+                        setSuccessMessage('');
+                    }, 5000);
 
                     setIsPunchedIn((prevState) => !prevState);
                     setIsPunching(false);
@@ -166,7 +173,6 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
     const checkPunchStatus = async () => {
         try {
             const punchInfo = await AsyncStorage.getItem('@punchInfo');
-            
             if (punchInfo) {
                 setPunchInfo(JSON.parse(punchInfo));
                 setIsPunchedIn(true);
@@ -259,6 +265,27 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
                 </Card.Content>
             </Card>
 
+            {errMessage &&
+            <Card style={{ backgroundColor: theme.colors.warning, marginTop: 16 }}>
+                <Card.Content>
+                    <View style={[styles.locationContainer]}>
+                        <FeatherIcon name="alert-circle" size={18} color={theme.colors.white} style={styles.locationIcon} />
+                        <Title style={{ color: theme.colors.white, fontSize: 16 }}>{errMessage}</Title>
+                    </View>
+                </Card.Content>
+            </Card>}
+
+            {successMessage && (
+                <Card style={{ backgroundColor: theme.colors.success, marginTop: 16 }}>
+                    <Card.Content>
+                        <View style={[styles.locationContainer]}>
+                            <FeatherIcon name="check-circle" size={18} color={theme.colors.white} style={styles.locationIcon} />
+                            <Title style={{ color: theme.colors.white, fontSize: 16 }}>{successMessage}</Title>
+                        </View>
+                    </Card.Content>
+                </Card>
+            )}
+
             {/* Heading outside the card */}
             <Text style={{ marginTop: 16, marginBottom: 4, fontSize: 20, fontWeight: 'bold', color: 'black' }}>
             Today Duty
@@ -306,17 +333,6 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
             </Card.Content>
         </Card>
         }
-
-        {errMessage &&
-            <Card style={{ backgroundColor: theme.colors.warning, marginTop: 16 }}>
-                <Card.Content>
-                    <View style={[styles.locationContainer]}>
-                        <FeatherIcon name="alert-circle" size={18} color={theme.colors.white} style={styles.locationIcon} />
-                        <Title style={{ color: theme.colors.white, fontSize: 16 }}>{errMessage}</Title>
-                    </View>
-                </Card.Content>
-            </Card>}
-
     </View>);
 };
 

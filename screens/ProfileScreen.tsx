@@ -85,9 +85,9 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       <TouchableOpacity style={styles.addressContainer}>
         <View style={styles.avatarContainer}>
           <Avatar.Image size={150} style={styles.avatar} source={{ uri: userProfile?.profile_picture || userDefaultImage }} />
-          <TouchableOpacity style={styles.editIconContainer} onPress={() => Alert.alert('Feature will launched soon!')}>
+          {/* <TouchableOpacity style={styles.editIconContainer} onPress={() => Alert.alert('Feature will launched soon!')}>
             <FeatherIcon name="edit" size={24} color={theme.colors.primary} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <Text variant="headlineSmall" style={styles.name}>{userProfile?.first_name} {userProfile?.middle_name}</Text>
           {/* <Text style={styles.bio}>{userProfile.bio}</Text> */}

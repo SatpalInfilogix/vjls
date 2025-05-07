@@ -57,7 +57,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         
 
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        console.log(timezone)
         const response = await axios.post(`${config.apiEndpoint}login`,
           new URLSearchParams({
             phone_number: phoneNumber,
@@ -74,7 +73,13 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         let { data } = response.data;
         await AsyncStorage.setItem('@userToken', data.token);
         await AsyncStorage.setItem('@userInfo', JSON.stringify(data));
-        await AsyncStorage.removeItem('@punchInfo');
+
+        if(!response.data.punchInfo){
+          await AsyncStorage.removeItem('@punchInfo');
+        } else{
+          await AsyncStorage.setItem('@punchInfo', JSON.stringify(response.data.punchInfo));
+        }
+
         navigation.navigate('HomeTabs');
       } catch (error: any) {
         setIsSubmitting(false);
