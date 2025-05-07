@@ -113,10 +113,10 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
                         uri: Platform.OS === 'android' ? image.uri : image.uri.replace('file://', ''),
                     });
                     
-                    // formData.append(`${prefix}_lat`, location.coords.latitude.toString());
-                    // formData.append(`${prefix}_long`, location.coords.longitude.toString());
-                    formData.append(`${prefix}_lat`, '18.109581');
-                    formData.append(`${prefix}_long`, '-77.297508');
+                    formData.append(`${prefix}_lat`, location.coords.latitude.toString());
+                    formData.append(`${prefix}_long`, location.coords.longitude.toString());
+                    //formData.append(`${prefix}_lat`, '18.109581');
+                    //formData.append(`${prefix}_long`, '-77.297508');
                     formData.append(`time`, getCurrentDateTime());
                     formData.append(`${prefix}_location`, JSON.stringify(location));
 
