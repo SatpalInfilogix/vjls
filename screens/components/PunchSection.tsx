@@ -79,17 +79,18 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
         };
 
         const getCurrentDateTime = (): string => {
-            const now = new Date();
+            const now = new Date(); // local time by default
+        
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
-
+        
             return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
         };
-
+        
         launchCamera(cameraOptions, async (response: ImagePickerResponse) => {
             if (response.errorCode) {
                 Alert.alert("Camera Error", response.errorMessage);
@@ -98,49 +99,54 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
                 let image = response.assets[0] as any;
                 const prefix = isPunchedIn ? 'out' : 'in';
                 setIsPunching(true);
-
+                
                 try {
                     const location = await new Promise((resolve, reject) => {
                         Geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
                     }) as any;
-
+                    
                     const formData = new FormData();
                     formData.append(`${prefix}_image`, {
                         name: image.fileName,
                         type: image.type,
                         uri: Platform.OS === 'android' ? image.uri : image.uri.replace('file://', ''),
                     });
-
+                    
                     formData.append(`${prefix}_lat`, location.coords.latitude.toString());
                     formData.append(`${prefix}_long`, location.coords.longitude.toString());
+                    // formData.append(`${prefix}_lat`, '18.015961573348346');
+                    // formData.append(`${prefix}_long`, '-76.7997497960639');
                     formData.append(`time`, getCurrentDateTime());
                     formData.append(`${prefix}_location`, JSON.stringify(location));
 
                     const userToken = await AsyncStorage.getItem('@userToken');
-
-                    const response = await axios.post(`${config.apiEndpoint}punch/${prefix}`, formData, {
+                    
+                    const punchApiCall = await fetch(`${config.apiEndpoint}punch/${prefix}`, {
+                        method: 'POST',
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
                             'Authorization': `Bearer ${userToken}`,
-                            'Content-Type': 'multipart/form-data',
                         },
+                        body: formData,
                     });
+                    
+                    const apiResponse = await punchApiCall.json();
+                    let { success } = apiResponse;
 
-                    let { success } = response.data;
                     if (!success) {
                         setIsPunching(false);
-                        setErrMessage(response.data.message);
+                        setErrMessage(apiResponse.message);
                         return;
                     }
                     
                     setErrMessage('');
-
                     if (prefix === 'in') {
-                        let { data } = response.data;
+                        let { data } = apiResponse;
                         await AsyncStorage.setItem('@punchInfo', JSON.stringify(data));
                         setPunchInfo(data);
                     } else {
                         await AsyncStorage.removeItem('@punchInfo');
+                        setPunchInfo(null);
                     }
 
                     setIsPunchedIn((prevState) => !prevState);
@@ -160,6 +166,7 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
     const checkPunchStatus = async () => {
         try {
             const punchInfo = await AsyncStorage.getItem('@punchInfo');
+            
             if (punchInfo) {
                 setPunchInfo(JSON.parse(punchInfo));
                 setIsPunchedIn(true);
@@ -175,7 +182,6 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
         checkPunchStatus();
     }, []);
 
-   
     const getTimeFromDate = (dateString : String) => {
         const date = new Date(dateString as string);
     
@@ -192,43 +198,105 @@ const PunchSection: React.FC<PunchSectionProps> = ({ duty }) => {
         return time;
     };    
 
+    const formatDate = (input: string): string => {
+        const [yyyy, mm, dd] = input.split('-');
+        return `${dd}-${mm}-${yyyy}`;
+    };
+      
+    // Format time to HH:mm
+    const formatTime = (time: string): string => {
+        const date = new Date(`1970-01-01T${time}`);
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+      
+        hours = hours % 12;
+        hours = hours === 0 ? 12 : hours;
+      
+        return `${hours}:${minutes} ${ampm}`;
+    };
+      
+
     return (<View>
         {duty && duty.client_site ? <>
             <Card style={{ backgroundColor: theme.colors.primary }}>
                 <Card.Content>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <View style={{ flex: 1, margin: 5 }}>
-                            <Title style={{ color: theme.colors.white, fontSize: 14 }}>Punch In</Title>
-                            <Title style={{ color: theme.colors.white, fontSize: 14 }}>{punchInfo && punchInfo.in_time ? getTimeFromDate(punchInfo.in_time) : `--:--`}</Title>
-                        </View>
-                        <View style={{ flex: 1, margin: 5 }}>
-                            <Title style={{ color: theme.colors.white, fontSize: 14 }}>Punch Out</Title>
-                            <Title style={{ color: theme.colors.white, fontSize: 14 }}>--:--</Title>
-                        </View>
-                        <View style={{ flex: 1, margin: 5 }}>
-                            <TouchableOpacity style={{
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: 0.25,
-                                shadowRadius: 3.5,
-                                elevation: 5,
-                                backgroundColor: theme.colors.activeTabColor,
-                                borderRadius: 4,
-                                paddingVertical: 8
-                            }} onPress={handleTogglePunch}>
-
-                                {!isPunchedIn ? (<>
-                                    <FeatherIcon name='log-out' style={{ color: theme.colors.white, fontSize: 26, textAlign: 'center' }}></FeatherIcon>
-                                    <Title style={{ color: theme.colors.white, fontSize: 16, textAlign: 'center' }}>{`Punch In`}</Title>
-                                </>) : (<>
-                                    <FeatherIcon name='log-out' style={{ color: theme.colors.white, fontSize: 26, textAlign: 'center' }}></FeatherIcon>
-                                    <Title style={{ color: theme.colors.white, fontSize: 16, textAlign: 'center' }}>{`Punch Out`}</Title>
-                                </>)}
-                            </TouchableOpacity>
-                        </View>
+                    <View style={{ flex: 1, margin: 5 }}>
+                        <Title style={{ color: theme.colors.white, fontSize: 14 }}>Punch In</Title>
+                        <Title style={{ color: theme.colors.white, fontSize: 14 }}>
+                        {punchInfo?.in_time ? getTimeFromDate(punchInfo.in_time) : `--:--`}
+                        </Title>
+                    </View>
+                    <View style={{ flex: 1, margin: 5 }}>
+                        <Title style={{ color: theme.colors.white, fontSize: 14 }}>Punch Out</Title>
+                        <Title style={{ color: theme.colors.white, fontSize: 14 }}>--:--</Title>
+                    </View>
+                    <View style={{ flex: 1, margin: 5 }}>
+                        <TouchableOpacity
+                        style={{
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 3.5,
+                            elevation: 5,
+                            backgroundColor: theme.colors.activeTabColor,
+                            borderRadius: 4,
+                            paddingVertical: 8,
+                        }}
+                        onPress={handleTogglePunch}
+                        >
+                        <FeatherIcon
+                            name="log-out"
+                            style={{ color: theme.colors.white, fontSize: 26, textAlign: 'center' }}
+                        />
+                        <Title style={{ color: theme.colors.white, fontSize: 16, textAlign: 'center' }}>
+                            {isPunchedIn ? `Punch Out` : `Punch In`}
+                        </Title>
+                        </TouchableOpacity>
+                    </View>
                     </View>
                 </Card.Content>
             </Card>
+
+            {/* Heading outside the card */}
+            <Text style={{ marginTop: 16, marginBottom: 4, fontSize: 20, fontWeight: 'bold', color: 'black' }}>
+            Today Duty
+            </Text>
+
+            <Card style={{ backgroundColor: theme.colors.primary }}>
+                <Card.Content>
+                    {/* Row 1: Labels */}
+                    <View style={styles.singleRow}>
+                        <Text style={{ fontSize: 14, color: theme.colors.white }}>Date :</Text>
+                        <Text style={{ fontSize: 14, color: theme.colors.white }}> {formatDate(duty?.date)}</Text>
+                    </View>
+                    {/* Row 1: Labels */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={{ fontSize: 14, color: theme.colors.white }}>Start Time</Text>
+                    <Text style={{ fontSize: 14, color: theme.colors.white }}>End Time</Text>
+                    </View>
+
+                    {/* Row 2: Values */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <Text style={{ fontSize: 14, color: theme.colors.white }}>{duty.start_time ? formatTime(duty.start_time) : '--:--'}</Text>
+                    <Text style={{ fontSize: 14, color: theme.colors.white }}>{duty.end_time ? formatTime(duty.end_time) : '--:--'}</Text>
+                    </View>
+
+                    {/* Row 3: Labels */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={{ fontSize: 14, color: theme.colors.white }}>Site Location</Text>
+                    <Text style={{ fontSize: 14, color: theme.colors.white }}>Location Code</Text>
+                    </View>
+
+                    {/* Row 4: Values */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={{ fontSize: 14, color: theme.colors.white }}>{duty?.client_site?.location || '--:--'}</Text>
+                    <Text style={{ fontSize: 14, color: theme.colors.white }}>{duty?.client_site?.location_code || '--:--'}</Text>
+                    </View>
+                </Card.Content>
+            </Card>
+
         </> : <Card style={{ backgroundColor: theme.colors.warning }}>
             <Card.Content>
                 <View style={[styles.locationContainer]}>
@@ -277,6 +345,11 @@ const styles = StyleSheet.create({
     locationIcon: {
         paddingRight: 6,
         fontWeight: '900'
+    },
+    singleRow: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      marginBottom: 8,
     },
 });
 
